@@ -57,6 +57,7 @@ struct FloatingChatApp: App {
 class WindowController: ObservableObject {
     @Published var isExpanded = false
     @Published var isFloating = true
+    @Published var isVisible: Bool = true
     
     init() {
         setFloating(true)
@@ -93,14 +94,28 @@ class WindowController: ObservableObject {
         }
     }
     
+    func showWindow() {
+        if let window = NSApp.mainWindow {
+            window.makeKeyAndOrderFront(nil)
+            window.center()
+            NSApp.activate(ignoringOtherApps: true)
+            isVisible = true
+        }
+    }
+    
+    func hideWindow() {
+        if let window = NSApp.mainWindow {
+            window.orderOut(nil)
+            isVisible = false
+        }
+    }
+    
     func toggleVisibility() {
         if let window = NSApp.mainWindow {
             if window.isVisible {
-                window.orderOut(nil)
+                hideWindow()
             } else {
-                window.makeKeyAndOrderFront(nil)
-                window.center()
-                NSApp.activate(ignoringOtherApps: true)
+                showWindow()
             }
         }
     }

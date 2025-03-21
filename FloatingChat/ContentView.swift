@@ -128,7 +128,7 @@ struct ContentView: View {
     // Keyboard shortcut effects
     private func setupKeyboardShortcuts() {
         // Show/hide with keyboard shortcut in any app
-        KeyboardShortcuts.onKeyUp(for: .toggleFloatingChat) { [self] in
+        KeyboardShortcuts.onKeyUp(for: .toggleFloatingChat) {
             if windowController.isVisible {
                 windowController.hideWindow()
                 // Don't need to modify focus state here as the window is hidden
@@ -142,7 +142,7 @@ struct ContentView: View {
         }
         
         // Show with keyboard shortcut in any app
-        KeyboardShortcuts.onKeyUp(for: .showFloatingChat) { [self] in
+        KeyboardShortcuts.onKeyUp(for: .showFloatingChat) {
             windowController.showWindow()
             // Request focus when window appears
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
