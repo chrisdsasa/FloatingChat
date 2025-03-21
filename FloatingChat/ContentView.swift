@@ -8,6 +8,7 @@
 import SwiftUI
 import CoreData
 import Combine
+import KeyboardShortcuts
 
 struct ContentView: View {
     @Environment(\.managedObjectContext) private var viewContext
@@ -58,7 +59,7 @@ struct ContentView: View {
                 selectedModel: $selectedModel,
                 onSubmit: sendMessage,
                 isExpanded: windowController.isExpanded,
-                isInputFocused: $isInputFocused,
+                shouldFocus: isInputFocused,
                 onSettingsTapped: { isPresentingSettings = true }
             )
             .padding(.horizontal, 16)
@@ -76,10 +77,14 @@ struct ContentView: View {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 isInputFocused = true
             }
+            setupKeyboardShortcuts()
         }
         .sheet(isPresented: $isPresentingSettings) {
             SettingsView()
         }
+        .preferredColorScheme(.dark)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .environmentObject(conversationManager)
     }
     
     private func sendMessage() {
@@ -119,6 +124,32 @@ struct ContentView: View {
         // and display appropriate UI feedback
         print("Error: \(error.localizedDescription)")
     }
+    
+    // Keyboard shortcut effects
+    private func setupKeyboardShortcuts() {
+        // Show/hide with keyboard shortcut in any app
+        KeyboardShortcuts.onKeyUp(for: .toggleFloatingChat) { [self] in
+            if windowController.isVisible {
+                windowController.hideWindow()
+                // Don't need to modify focus state here as the window is hidden
+            } else {
+                windowController.showWindow()
+                // Request focus when window appears
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    isInputFocused = true
+                }
+            }
+        }
+        
+        // Show with keyboard shortcut in any app
+        KeyboardShortcuts.onKeyUp(for: .showFloatingChat) { [self] in
+            windowController.showWindow()
+            // Request focus when window appears
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                isInputFocused = true
+            }
+        }
+    }
 }
 
 // Input field view with toolbar buttons
@@ -128,9 +159,10 @@ struct InputFieldView: View {
     @Binding var selectedModel: AIModel
     var onSubmit: () -> Void
     var isExpanded: Bool
-    @Binding var isInputFocused: Bool
+    var shouldFocus: Bool
     var onSettingsTapped: () -> Void
     
+    @FocusState private var isFocused: Bool
     @State private var isToolbarExpanded = false
     
     var body: some View {
@@ -139,7 +171,7 @@ struct InputFieldView: View {
             HStack(alignment: .center) {
                 TextField("Message AI", text: $text, axis: .vertical)
                     .textFieldStyle(.plain)
-                    .focused($isInputFocused)
+                    .focused($isFocused)
                     .lineLimit(1...5)
                     .frame(maxWidth: .infinity)
                     .onSubmit {
@@ -206,6 +238,15 @@ struct InputFieldView: View {
                 }
                 .padding(.top, 4)
                 .transition(.opacity)
+            }
+        }
+        .onChange(of: shouldFocus) { newValue in
+            isFocused = newValue
+        }
+        .onAppear {
+            // Initially set focus state based on shouldFocus
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                isFocused = shouldFocus
             }
         }
     }
