@@ -8,114 +8,49 @@
 import SwiftUI
 import Combine
 import ServiceManagement
+import KeyboardShortcuts
 
 @main
 struct FloatingChatApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     let persistenceController = PersistenceController.shared
-    @StateObject private var windowController = WindowController()
+    @StateObject private var windowController = FloatingWindowController()
     @StateObject private var keyboardShortcutManager = KeyboardShortcutManager()
     
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .environment(\.managedObjectContext, persistenceController.container.viewContext)
-                .environmentObject(windowController)
-                .environmentObject(keyboardShortcutManager)
+            EmptyView()
+                .hidden()
+                .frame(width: 0, height: 0)
                 .onAppear {
+                    // Set the window controller in the app delegate
                     appDelegate.windowController = windowController
-                    keyboardShortcutManager.windowController = windowController
                     
-                    // Register the global shortcut
+                    // Hide the main window since we're using our custom window
+                    if let firstWindow = NSApplication.shared.windows.first {
+                        firstWindow.close()
+                    }
+                    
+                    // Show the window initially
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        keyboardShortcutManager.registerGlobalShortcut()
+                        windowController.showWindow()
                     }
                 }
         }
         .windowStyle(.hiddenTitleBar)
         .windowResizability(.contentSize)
         .commands {
-            CommandGroup(replacing: .newItem) { }
-        }
-        .defaultSize(width: 600, height: 70)
-        .onChange(of: windowController.isExpanded) { newValue in
-            NSApp.mainWindow?.setFrame(
-                NSRect(
-                    x: NSApp.mainWindow?.frame.origin.x ?? 0,
-                    y: NSApp.mainWindow?.frame.origin.y ?? 0,
-                    width: 600,
-                    height: newValue ? 500 : 70
-                ),
-                display: true,
-                animate: true
-            )
-        }
-    }
-}
-
-// Window controller to manage the floating behavior
-class WindowController: ObservableObject {
-    @Published var isExpanded = false
-    @Published var isFloating = true
-    @Published var isVisible: Bool = true
-    
-    init() {
-        setFloating(true)
-    }
-    
-    func toggleExpansion() {
-        isExpanded.toggle()
-    }
-    
-    func setFloating(_ floating: Bool) {
-        isFloating = floating
-        
-        // We need to apply these settings after a slight delay to ensure the window is created
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-            guard let self = self else { return }
+            // Hide default menu items that don't apply
+            CommandGroup(replacing: .newItem) {}
+            CommandGroup(replacing: .pasteboard) {}
+            CommandGroup(replacing: .undoRedo) {}
             
-            if let window = NSApp.mainWindow {
-                window.level = floating ? .floating : .normal
-                window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
-                window.isMovableByWindowBackground = true
-                window.styleMask.insert(.fullSizeContentView)
-                window.titlebarAppearsTransparent = true
-                window.titleVisibility = .hidden
-                
-                // Set the window's background to be partially transparent
-                window.backgroundColor = NSColor.windowBackgroundColor.withAlphaComponent(0.95)
-                window.hasShadow = true
-                
-                // Make window corners rounded
-                window.contentView?.wantsLayer = true
-                window.contentView?.layer?.cornerRadius = 16
-                window.contentView?.layer?.masksToBounds = true
-            }
-        }
-    }
-    
-    func showWindow() {
-        if let window = NSApp.mainWindow {
-            window.makeKeyAndOrderFront(nil)
-            window.center()
-            NSApp.activate(ignoringOtherApps: true)
-            isVisible = true
-        }
-    }
-    
-    func hideWindow() {
-        if let window = NSApp.mainWindow {
-            window.orderOut(nil)
-            isVisible = false
-        }
-    }
-    
-    func toggleVisibility() {
-        if let window = NSApp.mainWindow {
-            if window.isVisible {
-                hideWindow()
-            } else {
-                showWindow()
+            // Add custom commands
+            CommandGroup(after: .appInfo) {
+                Button("Settings...") {
+                    NotificationCenter.default.post(name: Notification.Name("ShowSettingsNotification"), object: nil)
+                }
+                .keyboardShortcut(",", modifiers: .command)
             }
         }
     }
@@ -125,7 +60,7 @@ class WindowController: ObservableObject {
 class KeyboardShortcutManager: ObservableObject {
     @Published var isListening = false
     private let shortcutHandler = KeyboardShortcutHandler.shared
-    var windowController: WindowController?
+    var windowController: FloatingWindowController?
     
     func registerGlobalShortcut() {
         // Register the shortcut handler callback

@@ -22,8 +22,6 @@ class ConversationManager: ObservableObject {
     private let maxContextWindowTokens: [AIModel: Int] = [
         .gpt4: 8192,
         .gpt4o: 16384,
-        .claude3: 100000,
-        .gemini: 32768
     ]
     
     // Rough approximation of tokens per word (actual tokenization is more complex)

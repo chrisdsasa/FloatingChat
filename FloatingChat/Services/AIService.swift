@@ -42,14 +42,20 @@ protocol AIServiceProvider {
     
     /// Set the API key for this provider
     func setApiKey(_ key: String)
+    
+    /// Get the name of the provider
+    var providerName: String { get }
+    
+    /// Get supported models
+    var supportedModels: [AIModel] { get }
 }
 
 /// Main service class that coordinates AI providers
 class AIService {
     static let shared = AIService()
     
-    // Available service providers
-    private var providers: [AIModel: AIServiceProvider] = [:]
+    // Available service providers mapped by provider type
+    private var providersByType: [AIProvider: AIServiceProvider] = [:]
     
     // Configuration
     private var apiKeys: [String: String] = [:]
@@ -59,12 +65,11 @@ class AIService {
         // Register providers
         let openAIProvider = OpenAIProvider()
         let anthropicProvider = AnthropicProvider()
-        let geminiProvider = GeminiProvider()
+        let xAIProvider = XAIProvider()
         
-        providers[.gpt4] = openAIProvider
-        providers[.gpt4o] = openAIProvider
-        providers[.claude3] = anthropicProvider
-        providers[.gemini] = geminiProvider
+        providersByType[.openAI] = openAIProvider
+        providersByType[.anthropic] = anthropicProvider
+        providersByType[.xAI] = xAIProvider
         
         // Load API keys from secure storage (implement this)
         loadAPIKeys()
@@ -76,35 +81,23 @@ class AIService {
         // For development only
         apiKeys["openai"] = ProcessInfo.processInfo.environment["OPENAI_API_KEY"] ?? ""
         apiKeys["anthropic"] = ProcessInfo.processInfo.environment["ANTHROPIC_API_KEY"] ?? ""
-        apiKeys["gemini"] = ProcessInfo.processInfo.environment["GEMINI_API_KEY"] ?? ""
+        apiKeys["xai"] = ProcessInfo.processInfo.environment["XAI_API_KEY"] ?? ""
         #endif
     }
     
-    /// Set API key for a specific provider
-    /// - Parameters:
-    ///   - key: The API key
-    ///   - provider: The provider name
     func setAPIKey(_ key: String, for provider: String) {
         apiKeys[provider] = key
         
-        // Find all instances of this provider type in our map and update the key
-        for (_, providerInstance) in providers {
-            switch provider {
-            case "openai":
-                if providerInstance is OpenAIProvider {
-                    providerInstance.setApiKey(key)
-                }
-            case "anthropic":
-                if providerInstance is AnthropicProvider {
-                    providerInstance.setApiKey(key)
-                }
-            case "gemini":
-                if providerInstance is GeminiProvider {
-                    providerInstance.setApiKey(key)
-                }
-            default:
-                break
-            }
+        // Find the provider instance and update the key
+        switch provider.lowercased() {
+        case "openai":
+            providersByType[.openAI]?.setApiKey(key)
+        case "anthropic":
+            providersByType[.anthropic]?.setApiKey(key)
+        case "xai":
+            providersByType[.xAI]?.setApiKey(key)
+        default:
+            break
         }
     }
     
@@ -129,7 +122,7 @@ class AIService {
         }
         
         // Get the appropriate provider for the selected model
-        guard let provider = providers[model] else {
+        guard let provider = providersByType[model.provider] else {
             return Fail(error: AIServiceError.unsupportedModel)
                 .eraseToAnyPublisher()
         }
@@ -162,7 +155,7 @@ class AIService {
         maxTokens: Int? = nil
     ) -> AnyPublisher<String, Error> {
         // Get the appropriate provider for the selected model
-        guard let provider = providers[model] else {
+        guard let provider = providersByType[model.provider] else {
             return Fail(error: AIServiceError.unsupportedModel)
                 .eraseToAnyPublisher()
         }
@@ -222,6 +215,12 @@ class RequestCache {
 class OpenAIProvider: AIServiceProvider {
     var apiKey: String = ""
     
+    var providerName: String { return "OpenAI" }
+    
+    var supportedModels: [AIModel] {
+        return [.gpt4o, .gpt4oMini, .gpt4, .gpt4Turbo, .gpt35Turbo]
+    }
+    
     func setApiKey(_ key: String) {
         apiKey = key
     }
@@ -239,7 +238,7 @@ class OpenAIProvider: AIServiceProvider {
             DispatchQueue.global().asyncAfter(deadline: .now() + 1.0) {
                 let response = ChatMessage(
                     id: UUID().uuidString,
-                    text: "This is a simulated response from OpenAI's \(model.rawValue) model.",
+                    text: "This is a simulated response from OpenAI's \(model.displayName) model.\n\n**Features:**\n- Markdown support\n- Code highlighting\n- Bullet points",
                     sender: .assistant,
                     timestamp: Date()
                 )
@@ -256,10 +255,18 @@ class OpenAIProvider: AIServiceProvider {
         maxTokens: Int?
     ) -> AnyPublisher<String, Error> {
         // Implement actual OpenAI streaming API call
-        // This is a placeholder that simulates a streaming response
+        // This is a placeholder that simulates a streaming response with markdown
         let responseChunks = [
             "This ", "is ", "a ", "simulated ", "streaming ", "response ", 
-            "from ", "OpenAI's ", model.rawValue, " model."
+            "from ", "OpenAI's ", model.displayName, " model.\n\n",
+            "**Key ", "features:**\n\n",
+            "- Markdown ", "support\n",
+            "- Code ", "highlighting\n",
+            "```swift\n",
+            "func ", "hello", "() ", "{\n",
+            "    ", "print", "(\"", "Hello", ", ", "world", "!\")\n",
+            "}\n```\n",
+            "- Bullet ", "points"
         ]
         
         return Publishers.Sequence(sequence: responseChunks)
@@ -272,6 +279,12 @@ class OpenAIProvider: AIServiceProvider {
 /// Anthropic Service Provider implementation
 class AnthropicProvider: AIServiceProvider {
     var apiKey: String = ""
+    
+    var providerName: String { return "Anthropic" }
+    
+    var supportedModels: [AIModel] {
+        return [.claudeOpus, .claudeSonnet, .claudeHaiku]
+    }
     
     func setApiKey(_ key: String) {
         apiKey = key
@@ -290,7 +303,7 @@ class AnthropicProvider: AIServiceProvider {
             DispatchQueue.global().asyncAfter(deadline: .now() + 1.2) {
                 let response = ChatMessage(
                     id: UUID().uuidString,
-                    text: "This is a simulated response from Anthropic's Claude 3 model.",
+                    text: "This is a simulated response from Anthropic's \(model.displayName) model.\n\n**Markdown** is supported as well as `code blocks` and other formatting.",
                     sender: .assistant,
                     timestamp: Date()
                 )
@@ -310,7 +323,9 @@ class AnthropicProvider: AIServiceProvider {
         // This is a placeholder that simulates a streaming response
         let responseChunks = [
             "This ", "is ", "a ", "simulated ", "streaming ", "response ", 
-            "from ", "Anthropic's ", "Claude 3", " model."
+            "from ", "Anthropic's ", model.displayName, " model.\n\n",
+            "**Markdown** ", "is ", "supported ", "as ", "well ", 
+            "as ", "`code ", "blocks` ", "and ", "other ", "formatting."
         ]
         
         return Publishers.Sequence(sequence: responseChunks)
@@ -320,9 +335,15 @@ class AnthropicProvider: AIServiceProvider {
     }
 }
 
-/// Gemini Service Provider implementation
-class GeminiProvider: AIServiceProvider {
+/// X.AI Service Provider implementation
+class XAIProvider: AIServiceProvider {
     var apiKey: String = ""
+    
+    var providerName: String { return "X.AI" }
+    
+    var supportedModels: [AIModel] {
+        return [.grok1]
+    }
     
     func setApiKey(_ key: String) {
         apiKey = key
@@ -334,14 +355,14 @@ class GeminiProvider: AIServiceProvider {
         temperature: Double,
         maxTokens: Int?
     ) -> AnyPublisher<ChatMessage, Error> {
-        // Implement actual Gemini API call
+        // Implement actual X.AI API call
         // This is a placeholder that simulates a response
         return Future<ChatMessage, Error> { promise in
             // Simulate network delay
             DispatchQueue.global().asyncAfter(deadline: .now() + 1.0) {
                 let response = ChatMessage(
                     id: UUID().uuidString,
-                    text: "This is a simulated response from Google's Gemini model.",
+                    text: "This is a simulated response from X.AI's \(model.displayName) model.\n\nI can format responses with *italics* or **bold** text.",
                     sender: .assistant,
                     timestamp: Date()
                 )
@@ -357,11 +378,13 @@ class GeminiProvider: AIServiceProvider {
         temperature: Double,
         maxTokens: Int?
     ) -> AnyPublisher<String, Error> {
-        // Implement actual Gemini streaming API call
+        // Implement actual X.AI streaming API call
         // This is a placeholder that simulates a streaming response
         let responseChunks = [
             "This ", "is ", "a ", "simulated ", "streaming ", "response ", 
-            "from ", "Google's ", "Gemini", " model."
+            "from ", "X.AI's ", model.displayName, " model.\n\n",
+            "I ", "can ", "format ", "responses ", "with ", 
+            "*italics* ", "or ", "**bold** ", "text."
         ]
         
         return Publishers.Sequence(sequence: responseChunks)
