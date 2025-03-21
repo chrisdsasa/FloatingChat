@@ -1,3 +1,4 @@
+import Foundation
 import KeyboardShortcuts
 
 extension KeyboardShortcuts.Name {

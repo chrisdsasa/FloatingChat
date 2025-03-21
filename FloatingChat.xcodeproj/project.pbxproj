@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		6A8B1B812D8D4E38009B3557 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = 6A8B1B802D8D4E38009B3557 /* KeyboardShortcuts */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		6A8B1B592D8D45C7009B3557 /* FloatingChat.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FloatingChat.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6A8B1B812D8D4E38009B3557 /* KeyboardShortcuts in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -33,6 +38,7 @@
 			isa = PBXGroup;
 			children = (
 				6A8B1B5B2D8D45C7009B3557 /* FloatingChat */,
+				6A8B1B7E2D8D4E1A009B3557 /* Frameworks */,
 				6A8B1B5A2D8D45C7009B3557 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -43,6 +49,13 @@
 				6A8B1B592D8D45C7009B3557 /* FloatingChat.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		6A8B1B7E2D8D4E1A009B3557 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -65,6 +78,7 @@
 			);
 			name = FloatingChat;
 			packageProductDependencies = (
+				6A8B1B802D8D4E38009B3557 /* KeyboardShortcuts */,
 			);
 			productName = FloatingChat;
 			productReference = 6A8B1B592D8D45C7009B3557 /* FloatingChat.app */;
@@ -94,6 +108,9 @@
 			);
 			mainGroup = 6A8B1B502D8D45C7009B3557;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				6A8B1B7F2D8D4E38009B3557 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 6A8B1B5A2D8D45C7009B3557 /* Products */;
 			projectDirPath = "";
@@ -319,6 +336,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		6A8B1B7F2D8D4E38009B3557 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sindresorhus/KeyboardShortcuts";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.3.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		6A8B1B802D8D4E38009B3557 /* KeyboardShortcuts */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6A8B1B7F2D8D4E38009B3557 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */;
+			productName = KeyboardShortcuts;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 6A8B1B512D8D45C7009B3557 /* Project object */;
 }
