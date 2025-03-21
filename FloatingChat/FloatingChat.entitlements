@@ -16,5 +16,7 @@
 	<array>
 		<string>$(TeamIdentifierPrefix)com.yourcompany.FloatingChat</string>
 	</array>
+	<key>com.apple.security.accessibility</key>
+	<true/>
 </dict>
 </plist>

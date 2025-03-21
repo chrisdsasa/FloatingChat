@@ -80,7 +80,10 @@ class AIService {
         #endif
     }
     
-
+    /// Set API key for a specific provider
+    /// - Parameters:
+    ///   - key: The API key
+    ///   - provider: The provider name
     func setAPIKey(_ key: String, for provider: String) {
         apiKeys[provider] = key
         

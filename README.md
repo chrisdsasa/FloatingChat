@@ -65,4 +65,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - [SwiftUI](https://developer.apple.com/xcode/swiftui/)
 - [Combine](https://developer.apple.com/documentation/combine)
-- [Core Data](https://developer.apple.com/documentation/coredata) 
+- [Core Data](https://developer.apple.com/documentation/coredata)
