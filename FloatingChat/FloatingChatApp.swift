@@ -22,6 +22,15 @@ struct FloatingChatApp: App {
                 .environment(\.managedObjectContext, persistenceController.container.viewContext)
                 .environmentObject(windowController)
                 .environmentObject(keyboardShortcutManager)
+                .onAppear {
+                    appDelegate.windowController = windowController
+                    keyboardShortcutManager.windowController = windowController
+                    
+                    // Register the global shortcut
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        keyboardShortcutManager.registerGlobalShortcut()
+                    }
+                }
         }
         .windowStyle(.hiddenTitleBar)
         .windowResizability(.contentSize)
@@ -40,16 +49,6 @@ struct FloatingChatApp: App {
                 display: true,
                 animate: true
             )
-        }
-    }
-    
-    init() {
-        // Share the window controller with AppDelegate
-        appDelegate.windowController = windowController
-        
-        // Register the global shortcut
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            keyboardShortcutManager.registerGlobalShortcut()
         }
     }
 }
@@ -111,6 +110,7 @@ class WindowController: ObservableObject {
 class KeyboardShortcutManager: ObservableObject {
     @Published var isListening = false
     private let shortcutHandler = KeyboardShortcutHandler.shared
+    var windowController: WindowController?
     
     func registerGlobalShortcut() {
         // Register the shortcut handler callback
@@ -138,10 +138,8 @@ class KeyboardShortcutManager: ObservableObject {
     
     func toggleVisibility() {
         // Use the main thread to update UI
-        DispatchQueue.main.async {
-            if let windowController = (NSApp.delegate as? AppDelegate)?.windowController {
-                windowController.toggleVisibility()
-            }
+        DispatchQueue.main.async { [weak self] in
+            self?.windowController?.toggleVisibility()
         }
     }
 }
