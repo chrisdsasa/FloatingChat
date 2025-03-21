@@ -39,6 +39,9 @@ protocol AIServiceProvider {
         temperature: Double,
         maxTokens: Int?
     ) -> AnyPublisher<String, Error>
+    
+    /// Set the API key for this provider
+    func setApiKey(_ key: String)
 }
 
 /// Main service class that coordinates AI providers
@@ -54,10 +57,14 @@ class AIService {
     
     private init() {
         // Register providers
-        providers[.gpt4] = OpenAIProvider()
-        providers[.gpt4o] = OpenAIProvider()
-        providers[.claude3] = AnthropicProvider()
-        providers[.gemini] = GeminiProvider()
+        let openAIProvider = OpenAIProvider()
+        let anthropicProvider = AnthropicProvider()
+        let geminiProvider = GeminiProvider()
+        
+        providers[.gpt4] = openAIProvider
+        providers[.gpt4o] = openAIProvider
+        providers[.claude3] = anthropicProvider
+        providers[.gemini] = geminiProvider
         
         // Load API keys from secure storage (implement this)
         loadAPIKeys()
@@ -73,24 +80,27 @@ class AIService {
         #endif
     }
     
-    /// Set API key for a specific provider
-    /// - Parameters:
-    ///   - key: The API key
-    ///   - provider: The provider name
+
     func setAPIKey(_ key: String, for provider: String) {
         apiKeys[provider] = key
         
-        // Update the key in the corresponding provider
-        for (model, provider) in providers {
-            if let openAIProvider = provider as? OpenAIProvider, 
-               provider == "openai" {
-                openAIProvider.apiKey = key
-            } else if let anthropicProvider = provider as? AnthropicProvider,
-                      provider == "anthropic" {
-                anthropicProvider.apiKey = key
-            } else if let geminiProvider = provider as? GeminiProvider,
-                      provider == "gemini" {
-                geminiProvider.apiKey = key
+        // Find all instances of this provider type in our map and update the key
+        for (_, providerInstance) in providers {
+            switch provider {
+            case "openai":
+                if providerInstance is OpenAIProvider {
+                    providerInstance.setApiKey(key)
+                }
+            case "anthropic":
+                if providerInstance is AnthropicProvider {
+                    providerInstance.setApiKey(key)
+                }
+            case "gemini":
+                if providerInstance is GeminiProvider {
+                    providerInstance.setApiKey(key)
+                }
+            default:
+                break
             }
         }
     }
@@ -209,6 +219,10 @@ class RequestCache {
 class OpenAIProvider: AIServiceProvider {
     var apiKey: String = ""
     
+    func setApiKey(_ key: String) {
+        apiKey = key
+    }
+    
     func sendChatRequest(
         messages: [ChatMessage],
         model: AIModel,
@@ -256,6 +270,10 @@ class OpenAIProvider: AIServiceProvider {
 class AnthropicProvider: AIServiceProvider {
     var apiKey: String = ""
     
+    func setApiKey(_ key: String) {
+        apiKey = key
+    }
+    
     func sendChatRequest(
         messages: [ChatMessage],
         model: AIModel,
@@ -302,6 +320,10 @@ class AnthropicProvider: AIServiceProvider {
 /// Gemini Service Provider implementation
 class GeminiProvider: AIServiceProvider {
     var apiKey: String = ""
+    
+    func setApiKey(_ key: String) {
+        apiKey = key
+    }
     
     func sendChatRequest(
         messages: [ChatMessage],

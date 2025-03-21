@@ -20,7 +20,8 @@ struct ContentView: View {
     @State private var selectedModel: AIModel = .gpt4o
     @State private var isPresentingSettings = false
     
-    private var cancellables = Set<AnyCancellable>()
+    // Create a class property that can be modified from within a closure
+    private let cancellableContainer = CancellableContainer()
     
     // Focus state for the text field
     @FocusState private var isInputFocused: Bool
@@ -57,7 +58,7 @@ struct ContentView: View {
                 selectedModel: $selectedModel,
                 onSubmit: sendMessage,
                 isExpanded: windowController.isExpanded,
-                isInputFocused: _isInputFocused,
+                isInputFocused: $isInputFocused,
                 onSettingsTapped: { isPresentingSettings = true }
             )
             .padding(.horizontal, 16)
@@ -110,7 +111,7 @@ struct ContentView: View {
                     // Each chunk is handled by the ConversationManager
                 }
             )
-            .store(in: &cancellables)
+            .store(in: &cancellableContainer.cancellables)
     }
     
     private func handleError(_ error: Error) {
@@ -127,7 +128,7 @@ struct InputFieldView: View {
     @Binding var selectedModel: AIModel
     var onSubmit: () -> Void
     var isExpanded: Bool
-    var isInputFocused: FocusState<Bool>.Binding
+    @Binding var isInputFocused: Bool
     var onSettingsTapped: () -> Void
     
     @State private var isToolbarExpanded = false
@@ -138,7 +139,7 @@ struct InputFieldView: View {
             HStack(alignment: .center) {
                 TextField("Message AI", text: $text, axis: .vertical)
                     .textFieldStyle(.plain)
-                    .focused(isInputFocused)
+                    .focused($isInputFocused)
                     .lineLimit(1...5)
                     .frame(maxWidth: .infinity)
                     .onSubmit {
@@ -352,6 +353,11 @@ enum AIModel: String, CaseIterable {
     case gpt4 = "GPT-4"
     case claude3 = "Claude 3"
     case gemini = "Gemini"
+}
+
+// Helper class to store cancellables
+class CancellableContainer {
+    var cancellables = Set<AnyCancellable>()
 }
 
 #Preview {

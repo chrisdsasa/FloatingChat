@@ -17,19 +17,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         // Give the window controller time to initialize
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            // Store the window controller for easy access
-            if let windowController = NSApp.windows.first?.windowController as? WindowController {
-                self.windowController = windowController
-            } else if let scene = NSApp.connectedScenes.first as? NSWindowScene,
-                     let windowController = scene.windows.first?.windowController as? WindowController {
-                self.windowController = windowController
-            } else {
-                // For SwiftUI apps, get the WindowController from the environment
-                if let windowController = NSApp.delegate?.value(forKey: "windowController") as? WindowController {
-                    self.windowController = windowController
-                } else {
-                    print("Could not find WindowController")
-                }
+            // In SwiftUI apps, the WindowController is injected through the FloatingChatApp
+            // The windowController will be set by FloatingChatApp.onAppear
+            if self.windowController == nil {
+                print("Warning: WindowController has not been set yet.")
             }
         }
         
