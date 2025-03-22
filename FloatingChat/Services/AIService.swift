@@ -50,8 +50,15 @@ protocol AIServiceProvider {
     var supportedModels: [AIModel] { get }
 }
 
+/// Enumeration of supported AI providers
+enum AIProvider: String {
+    case openAI
+    case anthropic
+    case xAI
+}
+
 /// Main service class that coordinates AI providers
-class AIService {
+class AIService: ObservableObject {
     static let shared = AIService()
     
     // Available service providers mapped by provider type

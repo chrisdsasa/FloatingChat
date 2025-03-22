@@ -17,6 +17,7 @@ class FloatingWindowController: ObservableObject {
         let contentView = ContentView()
             .environmentObject(ConversationManager.shared)
             .environmentObject(AIService.shared)
+            .environmentObject(self)
         
         // Create the window
         let window = NSWindow(
